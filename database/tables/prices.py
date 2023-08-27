@@ -23,6 +23,10 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
             PRIMARY KEY(id, utc)
         )
     """)
+    try:
+        c.execute(f"CREATE INDEX idx_{table_name}_utc ON {table_name}(utc)")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
 
     # Append DataFrame data to table

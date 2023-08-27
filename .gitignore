@@ -160,4 +160,4 @@ database/experiments
 
 data/db/*.db
 data/json/*.json
-data/zip/*.zip
+data/zip/*.bz2

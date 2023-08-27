@@ -1,6 +1,10 @@
 """Wrapper around sqlite3 Connection with utilities for updating and easy querying."""
 
+from typing import Union
+
+import os
 import sqlite3
+
 import pandas as pd
 
 from database.tables import cards, images, prices
@@ -11,11 +15,25 @@ class ETGDatabase:
 
     all_table_names = ("Cards", "Images", "Prices")
 
-    def __init__(self, database: str):
+    def __init__(self, database: Union[str, None] = None):
+        # If no database given, use most recent db version in data folder
+        if database is None:
+            path = "data/db/"
+
+            fnames = [fname for fname in os.listdir(path) if ".db" in fname]
+            if not fnames:
+                raise FileNotFoundError(f"No databases found in '{path}'!")
+
+            database = max(fnames, key=lambda x: x.split("_")[1][1:])
+            database = path + database
+
         self.conn = sqlite3.connect(database)
 
     def __del__(self):
-        self.conn.close()
+        try:
+            self.conn.close()
+        except AttributeError:
+            pass
 
     # Meta ----------------------------
 
