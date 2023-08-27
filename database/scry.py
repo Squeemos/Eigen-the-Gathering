@@ -10,7 +10,7 @@ import pandas as pd
 
 
 def download_default_cards() -> dict:
-    """Downloads default cards and returns response as a dict."""
+    """ONLY ONCE A DAY! Downloads default cards and returns response as a dict"""
     url = "https://api.scryfall.com/bulk-data/default_cards"
 
     print ("scry: Downloading default cards...")
@@ -34,7 +34,7 @@ def download_default_cards() -> dict:
     return json.loads(data.text)
 
 def save_json(data: dict, filepath: Union[str, None] = None):
-    """Save API response dictionary as a json."""
+    """Save API response dict in a json file"""
     if filepath is None:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filepath = f"data/json/default-cards_{timestamp}.json"
@@ -47,7 +47,7 @@ def save_json(data: dict, filepath: Union[str, None] = None):
     print("scry: Done.")
 
 def to_dataframe(data: dict) -> pd.DataFrame:
-    """Converts API response dict to a Pandas DataFrame."""
+    """Converts API response dict to a Pandas DataFrame"""
     df = pd.DataFrame.from_dict(data)
 
     return df

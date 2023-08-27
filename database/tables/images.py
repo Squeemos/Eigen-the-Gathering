@@ -22,6 +22,7 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
             PRIMARY KEY (id)
         )
     """)
+    conn.commit()
 
     # Insert DataFrame into a temporary table
     df.to_sql(f"Temp{table_name}", conn, if_exists="replace", index=False)

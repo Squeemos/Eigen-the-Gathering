@@ -157,3 +157,7 @@ cython_debug/
 .vscode/
 
 database/experiments
+
+data/db/*.db
+data/json/*.json
+data/zip/*.zip
