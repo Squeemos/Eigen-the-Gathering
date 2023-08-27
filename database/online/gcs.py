@@ -1,4 +1,5 @@
 import os
+import re
 
 from google.cloud import storage
 
@@ -21,6 +22,17 @@ class GCSConnection:
 
         with open(source_fname, "rb") as f:
             blob.upload_from_file(f)
+
+    def clean(self, max_files):
+        """Deletes older versions so only <max_files> databases or less remain."""
+        # Get sorted list of filenames
+        fnames = self.get_filenames()
+        fnames = sorted(fnames, key=lambda x: re.split("[_.]", x)[1][1:])
+
+        # Delete older versions
+        if len(fnames) > max_files:
+            for i in range(len(fnames) - max_files):
+                self.bucket.blob(fnames[i]).delete()
 
     def get_filenames(self):
         return [blob.name for blob in self.bucket.list_blobs()]

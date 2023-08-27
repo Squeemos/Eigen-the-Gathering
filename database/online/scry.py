@@ -33,15 +33,15 @@ def download_default_cards() -> dict:
     # Convert text to dictionary and return
     return json.loads(data.text)
 
-def save_json(data: dict, filepath: Union[str, None] = None):
+def save_json(data: dict, path: Union[str, None] = None):
     """Save API response dict in a json file"""
-    if filepath is None:
+    if path is None:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filepath = f"data/json/default-cards_{timestamp}.json"
+        path = f"data/json/default-cards_{timestamp}.json"
 
     print("scry: Writing data as json to '{filepath}'...")
 
-    with open(filepath, "w") as outfile:
+    with open(path, "w") as outfile:
         json.dump(data, outfile)
 
     print("scry: Done.")
