@@ -156,8 +156,10 @@ cython_debug/
 
 .vscode/
 
+database/online/keys/
 database/experiments
 
 data/db/*.db
 data/json/*.json
 data/zip/*.bz2
+

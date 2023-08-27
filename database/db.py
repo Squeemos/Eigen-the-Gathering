@@ -61,7 +61,7 @@ class ETGDatabase:
     def get_table(self, table_name: str):
         """Returns the full table of the given name as a DataFrame"""
         return self.get_tables((table_name))
-    
+
     def get_tables(self, table_names: list[str]):
         """Inner joins all tables in given list and returns as DataFrame"""
         table_names = [name.title() for name in table_names if name in self.all_table_names]

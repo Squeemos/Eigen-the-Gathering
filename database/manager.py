@@ -9,7 +9,8 @@ from functools import total_ordering
 import pandas as pd
 
 from database.db import ETGDatabase
-from database.comm import scry
+from database.online import scry
+from database.online.gcs import GCSConnection
 
 
 @total_ordering
@@ -32,15 +33,16 @@ class DBManager:
     def __init__(self, increment: bool):
         self.comp_type = "bz2"
         self.increment = increment
+        
+    # Commands ------------------------
 
     def update(self):
+        path = "data/db/"
+
         # Download data
         #data = scry.download_default_cards()
         #data = scry.to_dataframe(data)
-        path = "database/experiments/data/"
-        data = pd.read_json(path + os.listdir(path)[-2])
-
-        path = "data/db/"
+        data = pd.read_json("database/experiments/data/" + os.listdir(path)[-2])
 
         latest_file = self._get_latest("db")
 
@@ -84,22 +86,46 @@ class DBManager:
         else:
             print("No databases to unzip!")
 
-    @staticmethod
-    def pull():
-        pass
+    def pull(self):
+        path = "data/zip/"
 
-    @staticmethod
-    def push():
-        pass
+        gcs = GCSConnection()
 
-    def _get_latest(self, ftype: str):
+        source_names = gcs.get_filenames()
+        fname = self._get_latest(self.comp_type, source_names).filename
+        fsize = self._get_filesize(path, fname)
+
+        should_cont = input(f"dbup: Should '{fname}' [{fsize:.4f} Mb] be downloaded? (y,n) ").lower()
+        if should_cont in ("y", "yes"):
+            gcs.download(fname, path + fname)
+
+    def push(self):
+        path = "data/zip/"
+
+        gcs = GCSConnection()
+
+        fname = self._get_latest("zip").filename
+        fsize = self._get_filesize(path, fname)
+
+        should_cont = input(f"dbup: Should '{fname}' [{fsize:.4f} Mb] be pushed? (y,n) ").lower()
+
+        if should_cont in ("y", "yes"):
+            gcs.upload(path + fname, fname)
+
+    # Helpers -------------------------
+
+    def _get_latest(self, ftype: str, filenames = None):
         path = f"data/{ftype}/"
 
+        if filenames is None:
+            filenames = os.listdir(path)
+
+        # Change file type to compression type if applicable
         if ftype == "zip":
             ftype = self.comp_type
 
         # Get newest version
-        files = [DBFile(fname) for fname in os.listdir(path) if f".{ftype}" in fname]
+        files = [DBFile(fname) for fname in filenames if f".{ftype}" in fname]
 
         if files:
             latest_file = max(files, key=lambda x: x.version)
@@ -107,12 +133,22 @@ class DBManager:
             return latest_file
 
         return None
+    
+    @staticmethod
+    def _get_filesize(path, fname):
+        fsize = os.stat(path + fname).st_size
+
+        # Bytes to Mb
+        fsize = fsize / (1024 ** 2)
+
+        return fsize
 
 
 def main():
     parser = argparse.ArgumentParser(description="Manages ETG database updating and storage.")
     parser.add_argument("command", choices=["update", "zip", "unzip", "pull", "push"])
-    parser.add_argument("-i", "--increment", action="store_true", help="Creates a new version during action.")
+    parser.add_argument("-i", "--increment", action="store_true",
+                        help="Creates a new version during action.")
     #parser.add_argument("--option", type=str, help="Option supplied to command.")
     args = parser.parse_args()
 
