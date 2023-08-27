@@ -156,5 +156,4 @@ cython_debug/
 
 .vscode/
 
-db/demo/data/*.json
-db/demo/data/*.db
+database/experiments
