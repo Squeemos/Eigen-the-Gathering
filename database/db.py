@@ -58,6 +58,10 @@ class ETGDatabase:
 
     # Querying ------------------------
 
+    def query(self, query):
+        """Shorthand for SQL query."""
+        return pd.read_sql(query, self.conn)
+
     def get_table(self, table_name: str):
         """Returns the full table of the given name as a DataFrame"""
         return self.get_tables((table_name))
@@ -72,13 +76,13 @@ class ETGDatabase:
 
         return pd.read_sql(query, self.conn)
 
-    def get_all_tables(self):
+    def get_all(self):
         """Inner joins and returns all tables (expensive and likely unnecessary, see get_tables)"""
         return self.get_tables(self.all_table_names)
 
     # Modification --------------------
 
-    def update(self, df: dict):
+    def update(self, df: pd.DataFrame):
         """Given an API response as a dictionary, creates/updates all tables"""
         df["utc"] = pd.to_datetime("today").now()
 
