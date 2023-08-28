@@ -45,10 +45,10 @@ class DBManager:
         dbfile = self._get_dbfile("db")
 
         # Download data
-        # data = scry.download_default_cards()
-        # data = scry.to_dataframe(data)
-        temp_path = "database/experiments/data/"
-        data = pd.read_json(temp_path + os.listdir(temp_path)[-2])
+        data = scry.download_default_cards()
+        data = scry.to_dataframe(data)
+        # temp_path = "database/experiments/data/"
+        # data = pd.read_json(temp_path + os.listdir(temp_path)[-2])
 
         if dbfile:
             fname = dbfile.filename
@@ -102,6 +102,28 @@ class DBManager:
         else:
             print("db-mgr: No databases to unzip!")
 
+    def push(self):
+        self.zip()
+
+        path = "data/zip/"
+
+        gcs = GCSConnection()
+
+        dbfile = self._get_dbfile("zip")
+
+        if dbfile:
+            fname = dbfile.filename
+            fsize = self._get_filesize(path, fname)
+
+            print(f"db-mgr: Pushing '{fname}' [{fsize:.4f} Mb]...")
+
+            gcs.upload(path + fname, fname)
+
+            # Delete older versions so only a given number remain
+            gcs.clean(2)
+        else:
+            print("db-mgr: No zipped databases to push!")
+
     def pull(self):
         path = "data/zip/"
 
@@ -114,31 +136,13 @@ class DBManager:
             fname = dbfile.filename
             fsize = self._get_filesize(path, fname)
 
-            should_cont = input(f"db-mgr: Should '{fname}' [{fsize:.4f} Mb] be downloaded? (y,n) ").lower()
-            if should_cont in ("y", "yes"):
-                gcs.download(fname, path + fname)
+            print(f"db-mgr: Printing '{fname}' [{fsize:.4f} Mb]...")
+
+            gcs.download(fname, path + fname)
+
+            self.unzip()
         else:
             print("db-mgr: No databases to pull!")
-
-    def push(self):
-        path = "data/zip/"
-
-        gcs = GCSConnection()
-
-        dbfile = self._get_dbfile("zip")
-
-        if dbfile:
-            fname = dbfile.filename
-            fsize = self._get_filesize(path, fname)
-
-            should_cont = input(f"db-mgr: Should '{fname}' [{fsize:.4f} Mb] be pushed? (y,n) ").lower()
-            if should_cont in ("y", "yes"):
-                gcs.upload(path + fname, fname)
-
-            # Delete older versions so only a given number remain
-            gcs.clean(2)
-        else:
-            print("db-mgr: No zipped databases to push!")
 
     # Helpers -------------------------
 
@@ -215,8 +219,8 @@ def main():
             "  increment - Copys db to create a new version\n"
             "  zip       - Compresses db and writes to data/zip/\n"
             "  unzip     - Uncompresses db and writes to data/db/\n"
-            "  pull      - Pulls zipped db from online storage\n"
-            "  push      - Pushes zipped db to online storage and deletes older versions if too many"
+            "  push      - Zips and pushes db to online storage (deletes older versions if too many)"
+            "  pull      - Pulls zipped db from online storage and unzips\n"
         )
     )
     parser.add_argument("-v", "--version", type=int, help="Version number to operate on")
@@ -240,12 +244,12 @@ def main():
     if cmd == "unzip":
         print(f"db-mgr: Unzipping {db_alias}...")
         mgr.unzip()
-    if cmd == "pull":
-        print(f"db-mgr: Pulling {db_alias}...")
-        mgr.pull()
     if cmd == "push":
         print(f"db-mgr: Pushing {db_alias}...")
         mgr.push()
+    if cmd == "pull":
+        print(f"db-mgr: Pulling {db_alias}...")
+        mgr.pull()
 
 if __name__ == "__main__":
     main()

@@ -27,11 +27,9 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
         c.execute(f"CREATE INDEX idx_{table_name}_utc ON {table_name}(utc)")
     except sqlite3.OperationalError:
         pass
-    conn.commit()
 
     # Append DataFrame data to table
     df.to_sql(table_name, conn, if_exists='append', index=False)
 
     # Delete data older than a month
     c.execute(f"DELETE FROM {table_name} WHERE utc <= datetime('now', '-1 month', 'utc')")
-    conn.commit()

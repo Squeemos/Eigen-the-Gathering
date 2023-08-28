@@ -1,7 +1,5 @@
 """Wrapper around sqlite3 Connection with utilities for updating and easy querying."""
 
-from typing import Union
-
 import os
 import sqlite3
 
@@ -15,7 +13,7 @@ class ETGDatabase:
 
     all_table_names = ("Cards", "Images", "Prices")
 
-    def __init__(self, database: Union[str, None] = None):
+    def __init__(self, database: str | None = None):
         # If no database given, use most recent db version in data folder
         if database is None:
             path = "data/db/"
@@ -58,16 +56,16 @@ class ETGDatabase:
 
     # Querying ------------------------
 
-    def query(self, query):
+    def query(self, query) -> pd.DataFrame:
         """Shorthand for SQL query."""
         return pd.read_sql(query, self.conn)
 
-    def get_table(self, table_name: str):
-        """Returns the full table of the given name as a DataFrame"""
+    def get_table(self, table_name: str) -> pd.DataFrame:
+        """Returns the full table of the given name as a DataFrame."""
         return self.get_tables((table_name))
 
-    def get_tables(self, table_names: list[str]):
-        """Inner joins all tables in given list and returns as DataFrame"""
+    def get_tables(self, table_names: list[str]) -> pd.DataFrame:
+        """Inner joins all tables in given list and returns as DataFrame."""
         table_names = [name.title() for name in table_names if name in self.all_table_names]
 
         query = f"SELECT * FROM {table_names[0]}"
@@ -76,17 +74,41 @@ class ETGDatabase:
 
         return pd.read_sql(query, self.conn)
 
-    def get_all(self):
-        """Inner joins and returns all tables (expensive and likely unnecessary, see get_tables)"""
+    def get_all(self) -> pd.DataFrame:
+        """Inner joins and returns all tables (expensive and likely unnecessary, see get_tables)."""
         return self.get_tables(self.all_table_names)
+    
+    def date_range(self, start: str, end: str | None = None) -> pd.DataFrame:
+        """Returns Card/Price date between given range (inclusive).
+        
+        Format date strings as YYYY-MM-DD. If no end date given, defaults to today.
+        """
+        if end is None:
+            end = self._current_date()
+
+        return pd.read_sql(f"""
+           SELECT * FROM Cards INNER JOIN Prices USING(id)
+           WHERE utc BETWEEN '{start}' AND '{end}'
+        """, self.conn)
 
     # Modification --------------------
 
-    def update(self, df: pd.DataFrame):
+    def update(self, df: pd.DataFrame, date: str | None = None):
         """Given an API response as a dictionary, creates/updates all tables"""
-        df["utc"] = pd.to_datetime("today").now()
+        if date is None:
+            date = self._current_date()
+        df["utc"] = date
 
         # Update tables
         cards.update(df, self.conn)
         images.update(df, self.conn)
         prices.update(df, self.conn)
+
+        # Commit transaction
+        self.conn.commit()
+
+    # Modification --------------------
+
+    @staticmethod
+    def _current_date():
+        return pd.Timestamp.utcnow().strftime('%Y-%m-%d')

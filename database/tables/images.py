@@ -22,7 +22,6 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
             PRIMARY KEY (id)
         )
     """)
-    conn.commit()
 
     # Insert DataFrame into a temporary table
     df.to_sql(f"Temp{table_name}", conn, if_exists="replace", index=False)
@@ -32,8 +31,6 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
         INSERT OR REPLACE INTO {table_name} (id, image_status, small, normal, large, png, art_crop, border_crop)
         SELECT id, image_status, small, normal, large, png, art_crop, border_crop FROM TempImages
     """)
-    conn.commit()
 
     # Drop the temporary table
     c.execute(f"DROP TABLE Temp{table_name}")
-    conn.commit()
