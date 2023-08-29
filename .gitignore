@@ -156,7 +156,7 @@ cython_debug/
 
 .vscode/
 
-database/online/keys/
+database/online/keys/gcs/*.json
 database/experiments
 
 data/db/*.db
