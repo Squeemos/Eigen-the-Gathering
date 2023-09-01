@@ -134,9 +134,8 @@ class DBManager:
 
         if dbfile:
             fname = dbfile.filename
-            fsize = self._get_filesize(path, fname)
 
-            print(f"db-mgr: Pulling '{fname}' [{fsize:.4f} Mb]...")
+            print(f"db-mgr: Pulling '{fname}'...")
 
             gcs.download(fname, path + fname)
 
