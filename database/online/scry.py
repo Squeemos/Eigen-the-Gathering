@@ -2,7 +2,6 @@
 
 from typing import Union
 
-import json
 import datetime
 from requests import get
 
@@ -20,7 +19,7 @@ def download_default_cards() -> dict:
         raise RuntimeError(f"Request failed, got: {data.status_code}")
 
     try:
-        cards_url = json.loads(data.text)["download_uri"]
+        cards_url = data.json()["download_uri"]
     except Exception as e:
         raise RuntimeError(f"Exception loading data url. {e}")
 
@@ -31,7 +30,7 @@ def download_default_cards() -> dict:
     print("scry: Done.")
 
     # Convert text to dictionary and return
-    return json.loads(data.text)
+    return data.json()
 
 def save_json(data: dict, path: Union[str, None] = None):
     """Save API response dict in a json file"""
