@@ -120,7 +120,7 @@ class DBManager:
             gcs.upload(path + fname, fname)
 
             # Delete older versions so only a given number remain
-            gcs.clean(2)
+            gcs.clean(3)
         else:
             print("db-mgr: No zipped databases to push!")
 
