@@ -5,9 +5,11 @@ import textwrap
 import os
 import re
 import bz2
+import logging
+import sys
 from functools import total_ordering
 
-import pandas as pd
+# import pandas as pd
 
 from database.db import ETGDatabase
 from database.online import scry
@@ -17,7 +19,7 @@ from database.online.gcs import GCSConnection
 @total_ordering
 class DBFile:
     """Wrapper around database filename for easy manipulation."""
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         components = re.split("[_.]", filename)
 
         self.filename = filename
@@ -32,9 +34,11 @@ class DBFile:
 
 class DBManager:
     """Updates, compresses, and pushes/pulls databases."""
-    def __init__(self, args, comp_type="bz2"):
-        self.comp_type = comp_type
+    def __init__(self, args, logger, comp_type="bz2"):
         self.args = args
+        self.logger = logger
+
+        self.comp_type = comp_type
 
     # Commands ------------------------
 
@@ -76,7 +80,7 @@ class DBManager:
             db.conn.backup(db_new.conn)
             db = db_new
         else:
-            print("db-mgr: No database to increment!")
+            self._log_warning("db-mgr: No database to increment!")
 
     def zip(self):
         dbfile = self._get_dbfile("db")
@@ -88,7 +92,7 @@ class DBManager:
                 with bz2.BZ2File(f"data/zip/{zip_filename}", "wb") as f_out:
                     f_out.writelines(f_in)
         else:
-            print("db-mgr: No databases to zip!")
+            self._log_warning("db-mgr: No databases to zip!")
 
     def unzip(self):
         zipfile = self._get_dbfile("zip")
@@ -100,7 +104,7 @@ class DBManager:
                 with open(f"data/db/{db_filename}", "wb") as f_out:
                     f_out.writelines(f_in)
         else:
-            print("db-mgr: No databases to unzip!")
+            self._log_warning("db-mgr: No databases to unzip!")
 
     def push(self):
         self.zip()
@@ -122,7 +126,7 @@ class DBManager:
             # Delete older versions so only a given number remain
             gcs.clean(3)
         else:
-            print("db-mgr: No zipped databases to push!")
+            self._log_warning("db-mgr: No zipped databases to push!")
 
     def pull(self):
         path = "data/zip/"
@@ -141,11 +145,12 @@ class DBManager:
 
             self.unzip()
         else:
-            print("db-mgr: No databases to pull!")
+            self._log_warning("db-mgr: No databases to pull!")
 
     # Helpers -------------------------
 
     def _get_dbfile(self, ftype, filenames=None):
+        """Gets latest or specific version as DBFile."""
         v = self.args.version
         if v is None:
             return self._get_latest_dbfile(ftype, filenames)
@@ -153,6 +158,7 @@ class DBManager:
             return self._get_version_dbfile(ftype, v)
 
     def _get_latest_dbfile(self, ftype: str, filenames = None):
+        """Helper method for getting latest as a DBFile."""
         if filenames is None:
             path = f"data/{ftype}/"
             filenames = os.listdir(path)
@@ -172,6 +178,7 @@ class DBManager:
         return None
 
     def _get_version_dbfile(self, ftype: str, version: int):
+        """Helper method for getting a specific version as a DBFile."""
         path = f"data/{ftype}/"
 
         # Create filename for version
@@ -185,8 +192,12 @@ class DBManager:
 
         return DBFile(fname)
 
+    def _log_warning(self, msg: str):
+        print(msg)
+        self.logger.warning(msg)
+
     @staticmethod
-    def _get_filesize(path, fname):
+    def _get_filesize(path: str, fname: str):
         fsize = os.stat(path + fname).st_size
 
         # Bytes to Mb
@@ -205,6 +216,7 @@ def main():
             $ py database/mgr.py zip -v 2  -- zip v2 in data/db/ to data/zip/
             $ py database/mgr.py push      -- push latest zipped db to online storage
     """)
+    # Config argument parser
     parser = argparse.ArgumentParser(
         description=descr,
         formatter_class=argparse.RawTextHelpFormatter
@@ -224,10 +236,25 @@ def main():
     )
     parser.add_argument("-v", "--version", type=int, help="Version number to operate on")
 
-    # Init
+    # Config logger
+    logging.basicConfig(
+        filename="error.log",
+        level=logging.WARNING,
+        format="%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s() -> %(message)s",
+    )
+
+    # Set logger to document uncaught errors
+    sys.excepthook = lambda exc_type, exc_value, exc_traceback: logger.error(
+        "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+    )
+
+    # Create manager
     args = parser.parse_args()
+    logger = logging.getLogger()
+    mgr = DBManager(args, logger)
+
+    # Other init
     cmd = args.command
-    mgr = DBManager(args)
     db_alias = "latest db" if args.version is None else f"db v{args.version}"
 
     # Call command

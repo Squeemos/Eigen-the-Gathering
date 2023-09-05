@@ -100,16 +100,13 @@ class ETGDatabase:
         df["utc"] = date
 
         # Update tables
-        try:
-            cards.update(df, self.conn)
-            images.update(df, self.conn)
-            prices.update(df, self.conn)
+        cards.update(df, self.conn)
+        images.update(df, self.conn)
+        prices.update(df, self.conn)
 
-            # Commit transaction
-            self.conn.commit()
-        except sqlite3.Error as err:
-            print(f"An error occured: {err}")
-            self.conn.rollback()
+        # Commit transaction
+        self.conn.commit()
+
 
     # Modification --------------------
 
