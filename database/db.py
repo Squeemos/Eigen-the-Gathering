@@ -40,7 +40,7 @@ class ETGDatabase:
         cursor = self.conn.cursor()
 
         for table in self.all_table_names:
-            cursor.execute(f"SELECT * FROM {table}")
+            cursor.execute(f"SELECT * FROM {table} LIMIT {head_size}")
 
             print(f"=== {table} ===")
 
@@ -48,10 +48,10 @@ class ETGDatabase:
             print(col_names)
 
             rows = cursor.fetchall()
-            row_count = cursor.execute(f"SELECT COUNT(id) FROM {table}").fetchall()[0][0]
             for row in rows[:head_size]:
                 print(row)
 
+            row_count = cursor.execute(f"SELECT COUNT(id) FROM {table}").fetchall()[0][0]
             print(f"... ({row_count} rows total)", end="\n\n")
 
     # Querying ------------------------
@@ -62,7 +62,7 @@ class ETGDatabase:
 
     def get_table(self, table_name: str) -> pd.DataFrame:
         """Returns the full table of the given name as a DataFrame."""
-        return self.get_tables((table_name))
+        return self.get_tables([table_name])
 
     def get_tables(self, table_names: list[str]) -> pd.DataFrame:
         """Inner joins all tables in given list and returns as DataFrame."""
@@ -106,6 +106,7 @@ class ETGDatabase:
 
         # Commit transaction
         self.conn.commit()
+
 
     # Modification --------------------
 
