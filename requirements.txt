@@ -3,3 +3,5 @@ google-cloud-storage
 pmdarima
 requests
 matplotlib
+streamlit
+plotly

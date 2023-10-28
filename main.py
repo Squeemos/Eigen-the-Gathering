@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-    Simple script to pull data
+    Simple script to pull data (because I'm really lazy)
 """
 
 # Boilerplate
