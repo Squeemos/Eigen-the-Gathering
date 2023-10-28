@@ -15,9 +15,6 @@ import pandas as pd
 from plotly import graph_objects as go
 import pmdarima as pm
 
-import warnings
-warnings.simplefilter(action="ignore", category=FutureWarning)
-
 @st.cache_data
 def load_data(what: list[str]):
     db = ETGDatabase()
