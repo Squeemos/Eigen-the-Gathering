@@ -32,8 +32,8 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
     df = data.loc[:, features]
 
     # Convert list features to strings
-    df["cards"]["promo_types"] = list_to_str(df["cards"], "promo_types")
-    df["cards"]["frame_effects"] = list_to_str(df["cards"], "frame_effects")
+    df["promo_types"] = list_to_str(df, "promo_types")
+    df["frame_effects"] = list_to_str(df, "frame_effects")
 
     # Insert DataFrame into a temporary table
     df.to_sql(f"Temp{table_name}", conn, if_exists="replace", index=False)
