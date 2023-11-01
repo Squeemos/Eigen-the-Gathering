@@ -157,7 +157,11 @@ cython_debug/
 .vscode/
 
 database/online/keys/gcs/*.json
-database/experiments
+
+database/experiments/data/*.json
+database/experiments/data/*.db
+database/experiments/update_table/data/zip
+database/experiments/update_table/data/db
 
 data/db/*.db
 data/zip/*.bz2

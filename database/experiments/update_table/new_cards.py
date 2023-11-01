@@ -2,10 +2,6 @@ import sqlite3
 
 import pandas as pd
 
-def list_to_str(data: pd.DataFrame, column_name: str):
-    return data[column_name].apply(
-        lambda x: ",".join(x) if isinstance(x, list) else None
-    )
 
 def update(data: pd.DataFrame, conn: sqlite3.Connection):
     table_name = "Cards"
@@ -19,21 +15,13 @@ def update(data: pd.DataFrame, conn: sqlite3.Connection):
             name TEXT,
             set_name TEXT,
             border_color TEXT,
-            promo_types TEXT,
-            frame_effects TEXT,
             PRIMARY KEY (id)
         )
     """)
 
-    features = ["id", "name", "set_name", "border_color",
-                "promo_types", "frame_effects"]
-
     # Get columns needed for table from dataframe
+    features = ["id", "name", "set_name", "border_color"]
     df = data.loc[:, features]
-
-    # Convert list features to strings
-    df["cards"]["promo_types"] = list_to_str(df["cards"], "promo_types")
-    df["cards"]["frame_effects"] = list_to_str(df["cards"], "frame_effects")
 
     # Insert DataFrame into a temporary table
     df.to_sql(f"Temp{table_name}", conn, if_exists="replace", index=False)

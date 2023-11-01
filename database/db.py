@@ -107,9 +107,6 @@ class ETGDatabase:
         # Commit transaction
         self.conn.commit()
 
-
-    # Modification --------------------
-
     @staticmethod
     def _current_date():
         return pd.Timestamp.utcnow().strftime('%Y-%m-%d')
